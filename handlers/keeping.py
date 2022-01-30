@@ -4,7 +4,7 @@ import os
 
 class keeper:
 
-    filename = os.path.abspath(os.curdir) + "/handlers/cash/{}.json"
+    filename = os.path.abspath(os.curdir) + "/handlers/cache/{}.json"
 
     @staticmethod
     def upload(*args):

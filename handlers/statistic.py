@@ -15,13 +15,8 @@ class AdminFilter(BoundFilter):
         return member in ADMINS
 
 
-@dp.message_handler(Command("statistic"), AdminFilter())
+@dp.message_handler()
 async def post_statistic(message: types.Message):
-
-    with open(keeping.keeper.filename.format("statistic"), "r") as file:
-        info = json.load(file)
-
-    counter = info["counter"]
-    data = info["data"]
-
-    await message.answer(text=f"Дата: {data}\nОпубликовано за сегодня: {counter}")
+    await message.answer(
+        text="<i>Бот працює на базі інтернет порталу www.ukr.net\n\nАвтор проекту: @engineer_spock"
+    )
