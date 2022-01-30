@@ -8,13 +8,13 @@ class keeper:
 
     @staticmethod
     def upload(*args):
-        with open(keeper.filename.format(*args), "r") as file:
+        with open(keeper.filename.format(*args), "r", encoding="utf-8") as file:
             data = json.load(file)
         return data
 
     @staticmethod
     def save(*args, **kwargs):
-        with open(keeper.filename.format(*args), "w") as file:
+        with open(keeper.filename.format(*args), "w", encoding="utf-8") as file:
             json.dump(parser.update(**kwargs), file, indent=4)
 
     @staticmethod

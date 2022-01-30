@@ -1,3 +1,7 @@
+import asyncio
+import logging
+import time
+
 from loader import bot
 from data.config import CHANEL
 from .keeping import keeper
@@ -5,19 +9,22 @@ from .parsing import parser
 from .decorate import decorator
 
 import schedule
+import threading
 import os
 
 
-def statistic(recent_id):
+def statistic(recent_id: list, delete: bool = False):
     import json
     from datetime import datetime
+    counter = 0
 
-    with open(keeper.filename.format("statistic"), "r") as file:
-        info = json.load(file)
-    counter = info["counter"] + len(recent_id)
+    if not delete:
+        with open(keeper.filename.format("statistic"), "r", encoding="utf-8") as file:
+            info = json.load(file)
+        counter = int(info["counter"]) + len(recent_id)
 
-    with open(keeper.filename.format("statistic"), "w") as file:
-        json.dump(dict(counter=counter, data=datetime.now()), file, indent=4)
+    with open(keeper.filename.format("statistic"), "w", encoding="utf-8") as file:
+        json.dump(dict(counter=counter, data=str(datetime.now().strftime("%A, %d-%m-%y | %H:%M:%S"))), file, indent=4)
 
 
 async def post(*args, **kwargs):
@@ -28,22 +35,29 @@ async def post(*args, **kwargs):
             data = keeper.upload(*args).get(id)
             string = decorator.decorate(link=data.get("link"), news=data["news"],
                                         publisher=data["publisher"], title=args[0])
-            await bot.send_message(chat_id=CHANEL, text=string, parse_mode="HTML" )
+            await bot.send_message(chat_id=CHANEL, text=string, parse_mode="HTML")
 
 
-async def main():
+async def run():
+    logging.info("Функция парсинга активирована")
+    while True:
+        await post("main", url=parser.main)
+        schedule.run_pending()
+        time.sleep(60)
 
+
+def main():
     if not os.listdir(os.path.abspath(os.curdir) + "/handlers/cash"):
         keeper.save("main", url=parser.main)
-        keeper.save("politics", url=parser.politics)
-        keeper.save("economics", url=parser.economics)
 
-    # schedule.every(2).minutes.do(post, "politics", url=parser.politics)
-    # schedule.every(10).minutes.do(post, "economics", url=parser.economics)
-    schedule.every(1).minutes.do(post, "main", url=parser.main)
+    schedule.every().day.at("00:01").do(statistic, recent_id=[], delete=True)
 
-    while True:
-        await schedule.run_pending()
+    loop = asyncio.new_event_loop()
+    threading.Thread(daemon=True, target=loop.run_forever).start()
+
+    async def sleep_and_run():
+        await run()
+    asyncio.run_coroutine_threadsafe(sleep_and_run(), loop)
 
 
 if __name__ == "__main__":
